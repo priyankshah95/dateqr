@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DateQR — Ask Them Out Cutely 💕</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --primary: #e84393; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #fafafa;
+    color: #222;
+    min-height: 100vh;
+  }
+
+  nav {
+    background: white;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .nav-tag { font-size: 13px; color: #888; }
+
+  .hero {
+    background: linear-gradient(135deg, #fff0f6, #fce4ec);
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+  }
+  .hero h1 { font-size: 36px; font-weight: 800; line-height: 1.3; color: #222; }
+  .hero h1 span { color: var(--primary); }
+  .hero p { font-size: 17px; color: #666; margin-top: 1rem; max-width: 480px; margin-inline: auto; }
+  .hero-price {
+    display: inline-block; margin-top: 1.5rem;
+    background: var(--primary); color: white;
+    padding: 8px 24px; border-radius: 50px;
+    font-size: 15px; font-weight: 600;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  @media (max-width: 680px) { .container { grid-template-columns: 1fr; } }
+
+  /* FORM CARD */
+  .form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  }
+  .form-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 1.2rem; }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; margin-top: 1rem; }
+  input[type=text], textarea {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #e8e8e8; border-radius: 10px;
+    font-size: 15px; font-family: inherit; outline: none;
+    background: #fafafa; transition: border 0.2s;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--primary); background: white; }
+  textarea { resize: vertical; min-height: 72px; }
+
+  .color-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .color-swatch {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.selected { border-color: #222; transform: scale(1.15); }
+
+  .pay-btn {
+    width: 100%; margin-top: 1.6rem; padding: 15px;
+    font-size: 17px; font-weight: 700;
+    background: var(--primary); color: white;
+    border: none; border-radius: 50px; cursor: pointer;
+    box-shadow: 0 4px 18px rgba(232,67,147,0.35);
+  }
+  .pay-btn:hover { background: #c9307a; }
+  .stripe-note { text-align: center; font-size: 12px; color: #aaa; margin-top: 8px; }
+  .stripe-note span { color: #6772e5; font-weight: 600; }
+
+  /* PREVIEW CARD */
+  .preview-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    position: sticky;
+    top: 80px;
+  }
+  .preview-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 1.2rem; }
+
+  /* MOCKUP */
+  #mockup-wrap {
+    border-radius: 16px;
+    min-height: 340px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
+    transition: background 0.4s;
+    background: #fff0f6;
+    text-align: center;
+  }
+
+  .m-icon { font-size: 44px; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+
+  #prev-question { font-size: 16px; font-weight: 600; color: #333; line-height: 1.5; max-width: 240px; }
+
+  #prev-yes {
+    padding: 10px 32px; border: none; border-radius: 50px;
+    font-size: 15px; font-weight: 600; color: white; cursor: pointer;
+    background: var(--primary); transition: background 0.4s;
+    box-shadow: 0 3px 12px rgba(232,67,147,0.3);
+  }
+  #prev-yes:hover { filter: brightness(1.1); }
+
+  /* NO button — absolute inside mockup-wrap */
+  #prev-no {
+    position: absolute;
+    font-size: 13px; color: #aaa;
+    background: white; border: 1px solid #ddd;
+    border-radius: 50px; padding: 6px 20px;
+    cursor: pointer; user-select: none;
+    left: 50%; top: 82%;
+  }
+
+  /* YES confirmation inside preview */
+  #prev-confirm {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .prev-big-heart { font-size: 60px; animation: pop 0.5s ease forwards; }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.3);opacity:1} 100%{transform:scale(1)} }
+  #prev-confirm-text { font-size: 16px; font-weight: 700; line-height: 1.4; max-width: 220px; }
+  #prev-confirm-sub { font-size: 13px; color: #888; max-width: 220px; }
+  .reset-btn {
+    font-size: 12px; color: #aaa; background: none; border: none;
+    cursor: pointer; text-decoration: underline; margin-top: 4px;
+  }
+
+  /* SUCCESS */
+  #success-section { display: none; }
+  .success-card {
+    background: white; border-radius: 20px; padding: 2.5rem 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07); text-align: center;
+    max-width: 480px; margin: 3rem auto;
+  }
+  .success-card h2 { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem; }
+  .success-card p { font-size: 15px; color: #666; margin-bottom: 1.5rem; }
+  #qr-box { display: flex; justify-content: center; margin: 1.5rem 0; }
+  .dl-btn {
+    padding: 12px 36px; background: var(--primary); color: white;
+    border: none; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .share-link { margin-top: 1rem; font-size: 13px; color: #888; word-break: break-all; }
+  .share-link a { color: var(--primary); }
+
+  /* HOW IT WORKS */
+  .how { background: white; padding: 3rem 2rem; text-align: center; }
+  .how h2 { font-size: 26px; font-weight: 800; margin-bottom: 2rem; }
+  .steps { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+  .step { max-width: 180px; }
+  .step-icon { font-size: 36px; margin-bottom: 0.8rem; }
+  .step h3 { font-size: 15px; font-weight: 700; margin-bottom: 0.4rem; }
+  .step p { font-size: 13px; color: #888; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">DateQR 💕</div>
+  <div class="nav-tag">The cutest way to ask someone out</div>
+</nav>
+
+<div class="hero">
+  <h1>Ask them out <span>without the awkwardness</span> 💌</h1>
+  <p>Customize your date request page, pay once, get a QR code they scan to say yes!</p>
+  <div class="hero-price">Only $3 — instant QR code delivery</div>
+</div>
+
+<div class="container" id="main-section">
+
+  <!-- FORM -->
+  <div class="form-card">
+    <h2>✏️ Customize Your Page</h2>
+
+    <label>Your Name</label>
+    <input type="text" id="inp-name" placeholder="e.g. Priyank" oninput="updatePreview()" maxlength="30"/>
+
+    <label>Your Email <span style="font-weight:400;color:#aaa">(we'll confirm your order here)</span></label>
+    <input type="text" id="inp-email" placeholder="e.g. alex@gmail.com" maxlength="100"/>
+
+    <label>Custom Question</label>
+    <input type="text" id="inp-question" placeholder="e.g. Hey there, would you go on a date with me?" oninput="updatePreview()" maxlength="120"/>
+
+    <label>Message shown after they click Yes</label>
+    <textarea id="inp-msg" placeholder="e.g. Yaayyy, looking forward to our date! 🎉" oninput="updatePreview()" maxlength="160"></textarea>
+
+    <button class="pay-btn" onclick="goToStripe()">💳 Pay $3 &amp; Get My QR Code</button>
+    <p class="stripe-note">Secured by <span>Stripe</span> · No card data stored</p>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-card">
+    <h2>👀 Live Preview</h2>
+
+    <div id="mockup-wrap">
+      <!-- Ask view -->
+      <div id="prev-ask">
+        <div class="m-icon">&#10084;&#65039;</div>
+        <p id="prev-question" style="margin-top:0.8rem">Hey there, would you let me take you out on a date?</p>
+        <button id="prev-yes" style="margin-top:1rem" onclick="previewYes()">Yes 💝</button>
+      </div>
+
+      <!-- Confirm view -->
+      <div id="prev-confirm">
+        <div class="prev-big-heart">&#10084;&#65039;</div>
+        <p id="prev-confirm-text" style="color: var(--primary)"></p>
+        <p id="prev-confirm-sub"></p>
+        <p style="font-size:26px;letter-spacing:6px">&#127881;&#127801;&#128150;&#127881;</p>
+        <button class="reset-btn" onclick="resetPreview()">↩ Back to question</button>
+      </div>
+
+      <!-- Floating No button -->
+      <button id="prev-no">No</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="success-section">
+  <div class="success-card">
+    <div style="font-size:56px">🎉</div>
+    <h2>Your QR Code is Ready!</h2>
+    <p>Download your QR code below and share it with your special someone. When they scan it, the magic begins!</p>
+    <p id="email-note" style="font-size:13px;color:#e84393;font-weight:600;margin-top:-0.5rem;"></p>
+    <div id="qr-box"></div>
+    <button class="dl-btn" onclick="downloadQR()">⬇️ Download QR Code</button>
+    <div style="margin-top:1.2rem;padding:1rem;background:#fff0f6;border-radius:12px;font-size:13px;color:#666;line-height:1.7;">
+      💡 <strong>How to share:</strong><br/>
+      1. Click <strong>Download QR Code</strong> above<br/>
+      2. Print it or show it on your phone screen<br/>
+      3. Let them scan it and watch the magic happen 💕
+    </div>
+    <div class="share-link">Or share this link directly: <a id="share-link-a" href="#" target="_blank"></a></div>
+  </div>
+</div>
+
+<div class="how">
+  <h2>How it works 🪄</h2>
+  <div class="steps">
+    <div class="step"><div class="step-icon">✏️</div><h3>1. Customize</h3><p>Enter your name, message and pick a color theme</p></div>
+    <div class="step"><div class="step-icon">💳</div><h3>2. Pay $3</h3><p>One-time payment via Stripe — safe and instant</p></div>
+    <div class="step"><div class="step-icon">📱</div><h3>3. Get QR Code</h3><p>Download your unique QR code instantly</p></div>
+    <div class="step"><div class="step-icon">💕</div><h3>4. Share it!</h3><p>Hand it to them and watch the magic happen</p></div>
+  </div>
+</div>
+
+<script>
+(function() {
+
+  /* ── Colors ── */
+  var colors = [{ hex: '#e84393', bg: '#fff0f6' }];
+  var sel = colors[0];
+
+  /* ── Live Preview ── */
+  window.updatePreview = function() {
+    var name     = document.getElementById('inp-name').value.trim();
+    var question = document.getElementById('inp-question').value.trim();
+    var msg      = document.getElementById('inp-msg').value.trim();
+
+    document.getElementById('prev-question').textContent =
+      question || 'Hey there, would you let me take you out on a date?';
+
+    var confirmText = msg || (name ? name + ' is looking forward to seeing you!' : 'Yaayyy, looking forward to our date!');
+    document.getElementById('prev-confirm-text').textContent = confirmText;
+    document.getElementById('prev-confirm-sub').textContent  = 'Get ready for something special ✨';
+
+    document.getElementById('mockup-wrap').style.background = sel.bg;
+    document.getElementById('prev-yes').style.background    = sel.hex;
+    document.getElementById('prev-confirm-text').style.color = sel.hex;
+    document.documentElement.style.setProperty('--primary', sel.hex);
+  };
+  // Prefill form with random sample data
+  var sampleNames  = ['Alex', 'Jordan', 'Sam', 'Taylor', 'Casey', 'Morgan'];
+  var sampleEmails = ['alex@gmail.com', 'jordan@gmail.com', 'sam@gmail.com', 'taylor@gmail.com'];
+  var rName  = sampleNames[Math.floor(Math.random()  * sampleNames.length)];
+  var rEmail = sampleEmails[Math.floor(Math.random() * sampleEmails.length)];
+  document.getElementById('inp-name').value  = rName;
+  document.getElementById('inp-email').value = rEmail;
+  updatePreview();
+
+  /* ── Preview YES click ── */
+  window.previewYes = function() {
+    document.getElementById('prev-ask').style.display    = 'none';
+    document.getElementById('prev-no').style.display     = 'none';
+    var conf = document.getElementById('prev-confirm');
+    conf.style.display = 'flex';
+  };
+
+  window.resetPreview = function() {
+    document.getElementById('prev-ask').style.display    = 'block';
+    document.getElementById('prev-no').style.display     = 'block';
+    document.getElementById('prev-confirm').style.display = 'none';
+  };
+
+  /* ── No button floating inside mockup ── */
+  var noBtn  = document.getElementById('prev-no');
+  var wrap   = document.getElementById('mockup-wrap');
+
+  function moveNo() {
+    var ww = wrap.offsetWidth;
+    var wh = wrap.offsetHeight;
+    var bw = noBtn.offsetWidth  || 60;
+    var bh = noBtn.offsetHeight || 32;
+    var pad = 10;
+    var nx = pad + Math.random() * (ww - bw - pad * 2);
+    var ny = pad + Math.random() * (wh - bh - pad * 2);
+    noBtn.style.left = nx + 'px';
+    noBtn.style.top  = ny + 'px';
+  }
+
+  // Use mousemove on wrap — detect proximity to No button and jump
+  wrap.addEventListener('mousemove', function(e) {
+    var rect  = noBtn.getBoundingClientRect();
+    var cx    = rect.left + rect.width  / 2;
+    var cy    = rect.top  + rect.height / 2;
+    var dx    = e.clientX - cx;
+    var dy    = e.clientY - cy;
+    var dist  = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 55) moveNo();
+  });
+
+  noBtn.addEventListener('touchstart', function(e) { e.preventDefault(); moveNo(); });
+
+  /* ── Payment ── */
+  window.goToStripe = function() {
+    var name  = document.getElementById('inp-name').value.trim();
+    var msg   = document.getElementById('inp-msg').value.trim();
+    var email = document.getElementById('inp-email').value.trim();
+    if (!email) { alert('Please enter your email address!'); return; }
+    if (!name)  { alert('Please enter your name!'); return; }
+    if (!msg)   { alert('Please enter a custom message!'); return; }
+
+    // Save details to sessionStorage so we can restore after Stripe redirect
+    sessionStorage.setItem('dqr_name',  name);
+    sessionStorage.setItem('dqr_msg',   msg);
+    sessionStorage.setItem('dqr_q',     document.getElementById('inp-question').value.trim());
+    sessionStorage.setItem('dqr_email', email);
+
+    window.location.href = 'https://buy.stripe.com/test_fZu00j68H4UO6J9ekHaEE01';
+  };
+
+  // On page load, check if returning from Stripe payment
+  (function checkReturn() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('view') === '1') return; // date page, skip
+    var name  = sessionStorage.getItem('dqr_name');
+    var msg   = sessionStorage.getItem('dqr_msg');
+    var q     = sessionStorage.getItem('dqr_q');
+    var email = sessionStorage.getItem('dqr_email');
+    if (name && msg) {
+      sessionStorage.clear();
+      showSuccess(name, msg, q || '');
+    }
+  })();
+
+  function showSuccess(name, msg, q) {
+    var email = document.getElementById('inp-email').value.trim();
+    document.getElementById('main-section').style.display = 'none';
+    var sec = document.getElementById('success-section');
+    sec.style.display = 'block';
+
+    // Show email confirmation note
+    if (email) {
+      document.getElementById('email-note').textContent = 'A confirmation has been sent to ' + email;
+    }
+
+    var params = new URLSearchParams({ name: name, msg: msg, color: sel.hex, bg: sel.bg });
+    if (q) params.set('q', q);
+    var pageUrl = window.location.href.split('?')[0] + '?view=1&' + params.toString();
+
+    var a = document.getElementById('share-link-a');
+    a.href = pageUrl;
+    a.textContent = pageUrl.length > 55 ? pageUrl.substring(0, 55) + '...' : pageUrl;
+
+    document.getElementById('qr-box').innerHTML = '';
+    new QRCode(document.getElementById('qr-box'), {
+      text: pageUrl, width: 220, height: 220,
+      colorDark: sel.hex, colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+
+  window.downloadQR = function() {
+    var canvas = document.querySelector('#qr-box canvas');
+    if (!canvas) { alert('QR not ready yet!'); return; }
+    var link = document.createElement('a');
+    link.download = 'dateqr-code.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  /* ── Date page (when someone scans the QR) ── */
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('view') !== '1') return;
+    var name  = params.get('name')  || 'Someone special';
+    var msg   = params.get('msg')   || 'Looking forward to our date!';
+    var color = params.get('color') || '#e84393';
+    var bg    = params.get('bg')    || '#fff0f6';
+    var q     = params.get('q')     || 'Hey there, would you let me take you out on a date?';
+    showDatePage(name, msg, color, bg, q);
+  })();
+
+  function esc(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showDatePage(name, msg, color, bg, question) {
+    var style = document.createElement('style');
+    style.textContent = [
+      '@keyframes fall{0%{transform:translateY(-40px) rotate(0deg);opacity:.8}100%{transform:translateY(110vh) rotate(360deg);opacity:0}}',
+      '@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}',
+      '@keyframes pop{0%{transform:scale(0);opacity:0}70%{transform:scale(1.3);opacity:1}100%{transform:scale(1)}}',
+      '@keyframes fadein{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}'
+    ].join('');
+    document.head.appendChild(style);
+
+    document.body.innerHTML = '';
+    document.body.style.cssText = 'margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:' + bg + ';min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+
+    var petals = ['&#10024;','&#128144;','&#128149;','&#127801;','&#128148;'];
+    for (var i = 0; i < 16; i++) {
+      var p = document.createElement('div');
+      p.style.cssText = 'position:fixed;pointer-events:none;z-index:0;animation:fall linear infinite;';
+      p.innerHTML = petals[Math.floor(Math.random() * petals.length)];
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.fontSize = (12 + Math.random() * 14) + 'px';
+      p.style.animationDuration = (4 + Math.random() * 6) + 's';
+      p.style.animationDelay = (Math.random() * 8) + 's';
+      document.body.appendChild(p);
+    }
+
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:2rem;max-width:420px;width:100%;';
+
+    var askDiv = document.createElement('div');
+    askDiv.id = 'dp-ask';
+    askDiv.style.cssText = 'background:white;border-radius:24px;padding:2.5rem 2rem;box-shadow:0 8px 40px rgba(0,0,0,0.12);display:flex;flex-direction:column;align-items:center;gap:1.5rem;';
+    askDiv.innerHTML = '<div style="font-size:52px;animation:pulse 1.4s ease-in-out infinite">&#10084;&#65039;</div>'
+      + '<p style="font-size:21px;font-weight:600;color:#333;line-height:1.5">' + esc(question) + '</p>'
+      + '<button id="dp-yes" style="padding:14px 52px;font-size:18px;font-weight:600;background:' + color + ';color:white;border:none;border-radius:50px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,0.15);">Yes &#128157;</button>';
+    wrap.appendChild(askDiv);
+
+    var confDiv = document.createElement('div');
+    confDiv.id = 'dp-conf';
+    confDiv.style.cssText = 'display:none;background:white;border-radius:24px;padding:2.5rem 2rem;box-shadow:0 8px 40px rgba(0,0,0,0.12);flex-direction:column;align-items:center;gap:1.2rem;animation:fadein 0.6s ease;';
+    confDiv.innerHTML = '<div style="font-size:80px;animation:pop 0.5s ease forwards">&#10084;&#65039;</div>'
+      + '<p style="font-size:22px;font-weight:700;color:' + color + ';line-height:1.4">' + esc(msg) + '</p>'
+      + '<p style="font-size:15px;color:#888">Get ready for something special &#10024;</p>'
+      + '<p style="font-size:28px;letter-spacing:8px">&#127881;&#127801;&#128150;&#127881;</p>';
+    wrap.appendChild(confDiv);
+
+    document.body.appendChild(wrap);
+
+    var noBtn = document.createElement('button');
+    noBtn.textContent = 'No';
+    noBtn.style.cssText = 'position:fixed;padding:10px 28px;font-size:15px;background:white;color:#aaa;border:1px solid #ddd;border-radius:50px;cursor:pointer;z-index:999;user-select:none;';
+    var nX = window.innerWidth / 2 + 80, nY = window.innerHeight / 2 + 70;
+    noBtn.style.left = nX + 'px'; noBtn.style.top = nY + 'px';
+    document.body.appendChild(noBtn);
+
+    document.body.addEventListener('mousemove', function(e) {
+      var r = noBtn.getBoundingClientRect();
+      var cx = r.left + r.width/2, cy = r.top + r.height/2;
+      var dist = Math.sqrt(Math.pow(e.clientX-cx,2)+Math.pow(e.clientY-cy,2));
+      if (dist < 60) {
+        var m = 60, bw = noBtn.offsetWidth, bh = noBtn.offsetHeight;
+        nX = m + Math.random()*(window.innerWidth-bw-m*2);
+        nY = m + Math.random()*(window.innerHeight-bh-m*2);
+        noBtn.style.left = nX+'px'; noBtn.style.top = nY+'px';
+      }
+    });
+
+    noBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      var m=60,bw=noBtn.offsetWidth,bh=noBtn.offsetHeight;
+      nX=m+Math.random()*(window.innerWidth-bw-m*2);
+      nY=m+Math.random()*(window.innerHeight-bh-m*2);
+      noBtn.style.left=nX+'px'; noBtn.style.top=nY+'px';
+    });
+
+    document.getElementById('dp-yes').onclick = function() {
+      askDiv.style.display = 'none';
+      noBtn.style.display  = 'none';
+      confDiv.style.display = 'flex';
+    };
+  }
+
+})();
+</script>
+</body>
+</html>
